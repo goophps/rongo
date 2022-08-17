@@ -1,0 +1,8 @@
+.idea
+runtime/
+**/__pycache__
+venv
+.env.*
+.env
+
+

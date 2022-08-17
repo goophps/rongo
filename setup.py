@@ -1,11 +1,20 @@
 import setuptools
 
+meta = {}
+with open(
+    os.path.join(
+        os.path.abspath(os.path.dirname(__file__)), "rongo", "__init__.py"
+    ),
+    "r",
+) as f:
+    exec(f.read(), meta)
+
 with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="rongo",
-    version="0.0.1",
+    version=meta["__version__"],
     author="randolph",
     author_email="goophps@gmail.com",
     description="This is not a python web framework, it's a complement to such mini frameworks like fastapi sanic. Mainly refer to Thinkphp Laravel Django Masonite.",
