@@ -6,7 +6,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 setuptools.setup(
     name="rongo",
     version="0.0.1",
-    author="官迪",
+    author="randolph",
     author_email="goophps@gmail.com",
     description="This is not a python web framework, it's a complement to such mini frameworks like fastapi sanic. Mainly refer to Thinkphp Laravel Django Masonite.",
     long_description=long_description,
