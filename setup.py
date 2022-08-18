@@ -17,17 +17,22 @@ setuptools.setup(
     version=meta["__version__"],
     author="randolph",
     author_email="goophps@gmail.com",
-    description="This is not a python web framework, it's a complement to such mini frameworks like fastapi sanic. Mainly refer to Thinkphp Laravel Django Masonite.",
+    description="This is not a python web framework, it's a complement to such mini frameworks like fastapi sanic. "
+                "Mainly refer to Thinkphp Laravel Django Masonite.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/goophps/rongo.git",
     # 列出这个项目的包
     packages=[
-      "rongo",
-      "rongo.cache.drivers",
-      "rongo.cache",
-      "rongo.utils",
+        "rongo",
+        "rongo.cache",
+        "rongo.cache.drivers",
+        "rongo.contract",
+        "rongo.template",
+        "rongo.utils",
     ],
+    # 需要额外的文件(全部罗列到MANIFEST.in文件里)
+    include_package_data=True,
     # 依赖的包，将自动安装
     install_requires=[],
     classifiers=[

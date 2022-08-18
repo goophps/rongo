@@ -92,7 +92,7 @@ class CacheHandlerInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def locked(self, name: str):
+    async def locked(self, name: str) -> bool:
         """
         上锁
         :param name: 锁标识
@@ -101,7 +101,7 @@ class CacheHandlerInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    async def unlock(self, name: str):
+    async def unlock(self, name: str) -> bool:
         """
         解锁
         :param name: 锁标识
