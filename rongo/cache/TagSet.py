@@ -1,4 +1,4 @@
-from rongo.cache import Cache
+from ..cache import Cache
 
 
 class TagSet:

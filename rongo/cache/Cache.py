@@ -5,10 +5,11 @@ import time
 from abc import ABCMeta
 from functools import wraps
 
-from rongo.Manager import Manager
-from rongo.cache.TagSet import TagSet
-from rongo.contract.CacheHandlerInterface import CacheHandlerInterface
+from .TagSet import TagSet
+from ..contract.CacheHandlerInterface import CacheHandlerInterface
 from typing import Any
+
+from ..foundation import Manager
 
 
 class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):

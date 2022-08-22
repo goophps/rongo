@@ -13,21 +13,30 @@ with open('README.md', 'r', encoding='utf-8') as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="rongo",
+    name=meta["__name__"],
     version=meta["__version__"],
-    author="randolph",
-    author_email="goophps@gmail.com",
+    author=meta["__author__"],
+    author_email=meta["__email__"],
     description="This is not a python web framework, it's a complement to such mini frameworks like fastapi sanic. "
                 "Mainly refer to Thinkphp Laravel Django Masonite.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/goophps/rongo.git",
+    url=meta["__url__"],
     # 列出这个项目的包
     packages=[
         "rongo",
         "rongo.cache",
         "rongo.cache.drivers",
+        "rongo.configuration.providers",
+        "rongo.configuration",
+        "rongo.container",
         "rongo.contract",
+        "rongo.environment",
+        "rongo.exceptions",
+        "rongo.facades",
+        "rongo.foundation",
+        "rongo.loader",
+        "rongo.providers",
         "rongo.template",
         "rongo.utils",
     ],

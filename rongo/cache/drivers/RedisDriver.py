@@ -1,4 +1,4 @@
-from rongo.cache import Cache
+from ..Cache import Cache
 from redis import asyncio as aredis
 import redis
 
@@ -8,6 +8,7 @@ class RedisDriver(Cache):
     redis驱动
     """
 
+    # 类属性。 所有实例共享
     options = {
         'host': '127.0.0.1',
         'port': 6379,
