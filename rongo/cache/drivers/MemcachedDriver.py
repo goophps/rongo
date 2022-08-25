@@ -1,9 +1,8 @@
 from ..Cache import Cache
-from redis import asyncio as aredis
-import redis
+from pymemcache.client.base import Client
 
 
-class RedisDriver(Cache):
+class MemcachedDriver(Cache):
     """
     redis驱动
     """
@@ -12,8 +11,6 @@ class RedisDriver(Cache):
     options = {
         'host': '127.0.0.1',
         'port': 6379,
-        'password': '',
-        'db': 0,
         'timeout': 10,
         'expire': 0,
         'prefix': '',
@@ -23,9 +20,8 @@ class RedisDriver(Cache):
     def __init__(self, options: dict):
         self.options.update(options)
         super().__init__(self.options)
-        self.handler = aredis.Redis(host=self.options['host'], port=self.options['port'], db=self.options['db'],
-                                    password=self.options['password'], socket_timeout=self.options['timeout'],
-                                    socket_connect_timeout=self.options['timeout'])
+        self.handler = Client(f"{self.options['host']}:{self.options['port']}", timeout=self.options['timeout'],
+                              connect_timeout=self.options['timeout'])
 
     def handler(self):
         """
@@ -40,7 +36,7 @@ class RedisDriver(Cache):
         :param name: 缓存key
         :return:
         """
-        return bool(await self.handler.exists(self.get_cache_key(name)))
+        return False if name is None else bool(self.handler.get(self.get_cache_key(name)))
 
     async def get(self, name: str, default=None):
         """
@@ -49,10 +45,7 @@ class RedisDriver(Cache):
         :param default: 默认值(无值时)
         :return:
         """
-        value = await self.handler.get(self.get_cache_key(name))
-        if not value:
-            return default
-
+        value = self.handler.get(self.get_cache_key(name), default)
         return self.un_serialize(value)
 
     async def set(self, name: str, value, expire: int = None) -> bool:
@@ -67,13 +60,8 @@ class RedisDriver(Cache):
         expire = self.get_expire_time(expire)
         value = self.serialize(value)
 
-        if expire > 0:
-            result = await self.handler.setex(key, expire, value)
-        elif expire == 0:
-            result = await self.handler.set(key, value)
-        else:
-            # 时间小于零，则删除缓存
-            result = await self.handler.delete(key) > 0
+        result = self.handler.set(key, value, expire)
+
         if result is True:
             return True
         else:
@@ -86,7 +74,7 @@ class RedisDriver(Cache):
         :param step: 步长
         :return: 一个新值
         """
-        return await self.handler.incrby(self.get_cache_key(name), step)
+        return self.handler.incr(self.get_cache_key(name), step)
 
     async def decrement(self, name: str, step: int = 1) -> int:
         """
@@ -95,7 +83,7 @@ class RedisDriver(Cache):
         :param step: 步长
         :return: 一个新值
         """
-        return await self.handler.decrby(self.get_cache_key(name), step)
+        return self.handler.decr(self.get_cache_key(name), step)
 
     async def delete(self, name: str) -> bool:
         """
@@ -103,14 +91,14 @@ class RedisDriver(Cache):
         :param name:
         :return:
         """
-        return await self.handler.delete(self.get_cache_key(name)) > 0
+        return self.handler.delete(self.get_cache_key(name))
 
     async def clear(self) -> bool:
         """
         清除缓存(清除当前数据库)
         :return:
         """
-        return await self.handler.flushdb()
+        return self.handler.flush_all()
 
     async def clear_tag(self, keys: list) -> bool:
         """
@@ -118,27 +106,7 @@ class RedisDriver(Cache):
         :param keys: 缓存标识列表
         :return:
         """
-        return await self.handler.delete(*keys) > 0
-
-    async def append(self, name: str, value) -> bool:
-        """
-        追加TagSet数据
-        :param name: 缓存标识
-        :param value: 数据
-        :return:
-        """
-        key = self.get_cache_key(name)
-        return await self.handler.sadd(key, value) > 0
-
-    async def get_tag_items(self, tag: str) -> list:
-        """
-        获取这个缓存标签包含的缓存key
-        :param tag: 缓存标签
-        :return:
-        """
-        name = self.get_tag_key(tag)
-        key = self.get_cache_key(name)
-        return await self.handler.smembers(key)
+        return self.handler.delete_many(keys)
 
     async def locked(self, name: str) -> bool:
         """
@@ -147,7 +115,7 @@ class RedisDriver(Cache):
         :return:
         """
         key = self.get_cache_key(name)
-        return await self.handler.setnx(key, 1)
+        return bool(self.handler.add(key, 1))
 
     async def unlock(self, name: str) -> bool:
         """
@@ -162,22 +130,14 @@ class RedisDriver(Cache):
         key_map = {
             self.get_cache_key(key): key for key in keys
         }
-        result = await self.handler.mget(key_map.keys())
+        result: dict = self.handler.get_many(key_map.keys())
         # 反处理回用户的key，加上数据，以键值对方式返回
-        return {keys[k]: (self.un_serialize(v) if v else default) for k, v in enumerate(result)}
+        return {self.resolve_cache_key(k): (self.un_serialize(v) if v else default) for k, v in result.items()}
 
     async def set_multiple(self, values: dict, expire: int = None) -> bool:
         # 设置多值
-        result = await self.handler.mset(
-            {self.get_cache_key(key): self.serialize(value) for key, value in values.items()})
-        # 单独设置过期时间
-        pipeline = self.handler.pipeline()
-        if expire is not None:
-            # Setting timeout for each key as redis does not support timeout
-            # with mset().
-            for key in values:
-                pipeline.expire(key, expire)
-        pipeline.execute()
+        result = self.handler.set_many(
+            {self.get_cache_key(key): self.serialize(value) for key, value in values.items()}, expire)
         return result
 
     async def delete_multiple(self, keys: list) -> bool:
@@ -185,4 +145,4 @@ class RedisDriver(Cache):
         key_map = {
             self.get_cache_key(key): key for key in keys
         }
-        return await self.handler.delete(*key_map.keys()) > 0
+        return self.handler.delete_many(key_map.keys())

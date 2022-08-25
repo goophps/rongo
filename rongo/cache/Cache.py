@@ -42,6 +42,14 @@ class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):
         else:
             return expire
 
+    def resolve_cache_key(self, name: str) -> str:
+        """
+        解析key(把从缓存里获取的key，解析成用户的key)
+        """
+        if not self.options['prefix']:
+            return name
+        return name[len(self.options['prefix']):]
+
     def get_cache_key(self, name: str) -> str:
         """
         获取缓存key
