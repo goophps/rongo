@@ -1,4 +1,4 @@
-from rongo.container import Container
+from .container import Container
 
 
 def app(name: str or object = None, *arguments):

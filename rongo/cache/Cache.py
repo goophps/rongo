@@ -157,7 +157,7 @@ class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):
         result = {}
 
         for key in keys:
-            result[key] = await self.get(key, default)
+            result[key] = await self.get(self.get_cache_key(key), default)
 
         return result
 
@@ -169,7 +169,7 @@ class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):
         :return:
         """
         for key in values:
-            result = await self.set(key, values[key], expire)
+            result = await self.set(self.get_cache_key(key), values[key], expire)
             if result is False:
                 return False
 
@@ -184,7 +184,7 @@ class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):
         # 先去重
         sets = builtins.set(keys)
         for key in sets:
-            result = self.delete(key)
+            result = self.delete(self.get_cache_key(key))
             if result is False:
                 return False
 
@@ -196,6 +196,7 @@ class Cache(Manager, CacheHandlerInterface, metaclass=ABCMeta):
         :param name: 锁标识
         :return:
         """
+
         async def decorate(func):
             @wraps(func)
             async def wrapper(*args, **kwargs):

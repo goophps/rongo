@@ -40,7 +40,7 @@ class RedisDriver(Cache):
         :param name: 缓存key
         :return:
         """
-        return await self.handler.exists(self.get_cache_key(name)) if True else False
+        return await bool(self.handler.exists(self.get_cache_key(name)))
 
     async def get(self, name: str, default=None):
         """
@@ -157,3 +157,26 @@ class RedisDriver(Cache):
         """
         key = self.get_cache_key(name)
         return await self.delete(key)
+
+    async def get_multiple(self, keys: list, default=None) -> dict:
+        # 每个key进行处理
+        key_map = {
+            self.get_cache_key(key): key for key in keys
+        }
+        result = await self.handler.mget(key_map.keys())
+        # 反处理回用户的key，加上数据，以键值对方式返回
+        return {keys[k]: (self.un_serialize(v) if v else default) for k, v in enumerate(result)}
+
+    async def set_multiple(self, values: dict, expire: int = None) -> bool:
+        # 设置多值
+        result = await self.handler.mset(
+            {self.get_cache_key(key): self.serialize(value) for key, value in values.items()})
+        # 单独设置过期时间
+        pipeline = self.handler.pipeline()
+        if expire is not None:
+            # Setting timeout for each key as redis does not support timeout
+            # with mset().
+            for key in values:
+                pipeline.expire(key, expire)
+        pipeline.execute()
+        return result
