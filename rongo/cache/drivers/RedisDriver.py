@@ -40,7 +40,7 @@ class RedisDriver(Cache):
         :param name: 缓存key
         :return:
         """
-        return await bool(self.handler.exists(self.get_cache_key(name)))
+        return bool(await self.handler.exists(self.get_cache_key(name)))
 
     async def get(self, name: str, default=None):
         """
